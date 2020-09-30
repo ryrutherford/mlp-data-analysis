@@ -17,6 +17,7 @@ import re
 import os.path as osp
 import pandas
 import operator
+import json
 
 def begin_computations(df, output_file):
     names = { 
@@ -27,10 +28,22 @@ def begin_computations(df, output_file):
             "Rainbow Dash": "rainbow",
             "Fluttershy": "fluttershy"
             }
-    #calculate_verbosity(df, names)
-    #calculate_mentions(df, names)
-    #calculate_follow_on_comments(df, names)
-    find_non_dict_words(df, names)
+    verbosity = calculate_verbosity(df, names)
+    mentions = calculate_mentions(df, names)
+    follow_on = calculate_follow_on_comments(df, names)
+    non_dict = find_non_dict_words(df, names)
+    all_stats = {
+                "verbosity": verbosity,
+                "mentions": mentions,
+                "follow_on_comments": follow_on,
+                "non_dictionary_words": non_dict
+            }
+    if(output_file != None):
+        with open(output_file, "w") as out:
+            json.dump(all_stats, out, indent = 2, separators=(',', ': '))
+    else:
+        print(json.dumps(all_stats, indent = 2, separators=(',', ': ')))
+
 
 """
 this function will calculate the verbosity for each pony (the fraction of dialog events that each pony has)
@@ -45,25 +58,30 @@ def calculate_verbosity(df, names):
                 "fluttershy": 0
             }
     num_dialog_events = 0
+    #prev_{var} indicates the value of the previous instance of that variable
     prev_speaker = None
-    for speaker in df["pony"]:
+    prev_title = None
+    for index, row in df.iterrows():
+        speaker = row["pony"]
+        title = row["title"]
+        other_speaking = True
         for dialog_name, data_name in names.items():
-            if(dialog_name in speaker):
-                #if the pony is part of the current speaker string (either speaking alone or part of a group) and the same group (or pony) isn't speaking consecutively,
-                #then we increment the count
-                #i.e. we only increment the count when the pony is speaking and the current speaker is not the same as the last speaker
-                #e.g. Narrator and Fluttershy are previous speaker and Fluttershy is the current speaker --> increment the count
-                #e.g. Narrator and Fluttershy are previous speaker and Narrator and Fluttershy are current speaker --> don't increment the count
-                if(prev_speaker != speaker):
+            #if the current speaker is equal to the pony (and only the pony) and the prev_speaker was not the pony or the previous line was from a diff episode
+            #we increment the dialog event count for that pony
+            if(dialog_name == speaker):
+                if(prev_speaker != speaker or prev_title != title):
+                    #we set other_speaking to False because it means "others" were not speaking
+                    other_speaking = False
                     pony_dialog_events[data_name] += 1
                     num_dialog_events += 1
+                    break
+        #if other_speaking is True then a pony wasn't speaking on its own
+        if(other_speaking == True):
+            num_dialog_events += 1
         prev_speaker = speaker
-    sum = 0
+        prev_title = title
     for data_name in names.values():
-        pony_dialog_events[data_name] = float(pony_dialog_events[data_name])/num_dialog_events
-        sum += pony_dialog_events[data_name]
-    print(pony_dialog_events)
-    print(sum)
+        pony_dialog_events[data_name] = 0 if num_dialog_events == 0 else float(pony_dialog_events[data_name])/num_dialog_events
     return pony_dialog_events
 
 """
@@ -130,8 +148,8 @@ def calculate_mentions(df, names):
         dialog = row["dialog"]
         #iterating over each pony's full name and shorthand name and checking if they are the speaker
         for current_pony, current_pony_shorthand in names.items():
-            #checking if the current_pony is speaking
-            if(current_pony in speaker):
+            #checking if the current_pony is speaking (we only care about when teh pony is the sole speaker)
+            if(current_pony == speaker):
                 #we will now check for mentions of the other ponies in the dialog
                 for pony, pony_shorthand in names.items():
                     #if current_pony == pony then we are looking at when a pony mentions itself which we don't care about
@@ -142,9 +160,9 @@ def calculate_mentions(df, names):
 
                         #counting all mentions of any part of the pony's name
                         for part_of_name in split_name:
-                            mentions_of_pon = len(re.findall(r"\b"+part_of_name+r"\b", dialog))
-                            pony_mention_events[current_pony_shorthand][pony_shorthand] += mentions_of_pon
-                            num_mentions_by_pony[current_pony_shorthand] += mentions_of_pon
+                            mentions_of_pony = len(re.findall(r"\b"+part_of_name+r"\b", dialog))
+                            pony_mention_events[current_pony_shorthand][pony_shorthand] += mentions_of_pony
+                            num_mentions_by_pony[current_pony_shorthand] += mentions_of_pony
                         
                         #subtracting the amount that we overcounted
                         split_name_len = len(split_name)
@@ -152,13 +170,10 @@ def calculate_mentions(df, names):
                             mentions_of_full_name = (split_name_len -1)*len(re.findall(r"\b"+pony+r"\b", dialog))
                             pony_mention_events[current_pony_shorthand][pony_shorthand] -= mentions_of_full_name
                             num_mentions_by_pony[current_pony_shorthand] -= mentions_of_full_name
+    #computing the fraction instead of the count of mentions that we currently have
     for pony, other_ponies in pony_mention_events.items():
-        #sum = 0
         for other_pony in other_ponies.keys():
-            pony_mention_events[pony][other_pony] = float(pony_mention_events[pony][other_pony])/num_mentions_by_pony[pony]
-            #sum += pony_mention_events[pony][other_pony]
-        #print(sum)
-    print(pony_mention_events)
+            pony_mention_events[pony][other_pony] = 0 if num_mentions_by_pony[pony] == 0 else float(pony_mention_events[pony][other_pony])/num_mentions_by_pony[pony]
     return pony_mention_events
 
 """
@@ -228,34 +243,43 @@ def calculate_follow_on_comments(df, names):
 
     prev_speaker = None
     for speaker in df["pony"]:
+        
+        #other_speaking variable indicates whether a non pony char is speaking
+        other_speaking = True
+        
         #iterating over each pony's full name and shorthand name and checking if they are the speaker
         for current_pony, current_pony_shorthand in names.items():
-            if(current_pony in speaker):
-                #prev_speaker_trimmed will remove pony names and things like "and" from the prev_speaker value
-                #if prev_speaker_trimmed is empty after all the trimming has been done then the pony didn't speak after an "other" character
-                prev_speaker_trimmed = prev_speaker
-                #we are ignoring the case where the current pony was also speaking in the previous line as part of a group
-                for pony, pony_shorthand in names.items():
-                    if(current_pony != pony):
-                        if(pony in prev_speaker):
-                            pony_follow_on_events[current_pony_shorthand][pony_shorthand] += 1
-                            num_follow_on_by_pony[current_pony_shorthand] += 1
-                            prev_speaker_trimmed = re.sub(r"\bpony\b", "", prev_speaker_trimmed)
+        
+            #if the current pony is speaking we check if this dialog followed another pony's line
+            if(current_pony == speaker):
                 
-                if(prev_speaker != None):
-                    prev_speaker_trimmed = re.sub(r"\band\b", "", prev_speaker_trimmed)
-                    prev_speaker_trimmed = "".join(prev_speaker_trimmed.split())
-                    if(prev_speaker_trimmed != ""):
-                        pony_follow_on_events[current_pony_shorthand]["other"] += 1
+                #checking all the other ponies to see if they were the previous speaker
+                for pony, pony_shorthand in names.items():
+                
+                    if(current_pony != pony and pony == prev_speaker):
+                        pony_follow_on_events[current_pony_shorthand][pony_shorthand] += 1
                         num_follow_on_by_pony[current_pony_shorthand] += 1
-        prev_speaker = speaker  
+                        other_speaking = False
+                        break
+                    #if the current pony was also the previous speaker then we set other_speaking to false since another char wasn't speaking and neither was another pony
+                    elif(current_pony == pony and current_pony == prev_speaker):
+                        other_speaking = False
+                        break
+                
+                #checking if the current_pony was speaking after a non top 6 pony
+                if(other_speaking == True):
+                    pony_follow_on_events[current_pony_shorthand]["other"] += 1
+                    num_follow_on_by_pony[current_pony_shorthand] += 1
+                #if other_speaking = False then we've already determined that this line follows another pony's line so we don't need to continue looping
+                else:
+                    break
+        prev_speaker = speaker
+
+    #calculating the fraction of follow on events
     for pony, other_ponies in pony_follow_on_events.items():
-        #sum = 0
         for other_pony in other_ponies.keys():
-            pony_follow_on_events[pony][other_pony] = float(pony_follow_on_events[pony][other_pony])/num_follow_on_by_pony[pony]
-            #sum += pony_follow_on_events[pony][other_pony]
-        #print(sum)
-    print(pony_follow_on_events)
+            pony_follow_on_events[pony][other_pony] = 0 if num_follow_on_by_pony[pony] == 0 else float(pony_follow_on_events[pony][other_pony])/num_follow_on_by_pony[pony]
+    
     return pony_follow_on_events
 
 def find_non_dict_words(df, names):
@@ -288,8 +312,8 @@ def find_non_dict_words(df, names):
         dialog = row["dialog"]
         #in this loop we check if a pony is speaking and if they are we look for non dictionary words
         for pony, pony_shorthand in names.items():
-            if(pony in speaker):
-                words_in_dialog = re.sub("\\s*u\\+\\w+>\\s*", " ", dialog.lower())
+            if(pony == speaker):
+                words_in_dialog = re.sub("\\s*U\\+\\w+>\\s*", " ", dialog)
                 #removing all non alphanumeric and space characters and replacing them with a space character
                 words_in_dialog = re.sub(r'[^A-Za-z0-9 ]+', " ", words_in_dialog)
                 #removing mutliple spaces
@@ -300,7 +324,7 @@ def find_non_dict_words(df, names):
                 #for each non dictionary word used by this pony we will update its count in the pony_non_dict_words dictionary
                 #at the end we will find the top 5 words
                 for word in words_in_dialog:
-                    if(word not in words_set):
+                    if(word.lower() not in words_set):
                         if(word in pony_non_dict_words[pony_shorthand]):
                             pony_non_dict_words[pony_shorthand][word] += 1
                         else:
@@ -335,5 +359,5 @@ def find_non_dict_words(df, names):
         sorted_non_dict_words = [f(i) for i in sorted_non_dict_words]
         #setting the value to be the list
         pony_non_dict_words_final[pony] = sorted_non_dict_words
-    print(pony_non_dict_words_final)
+    #print(pony_non_dict_words_final)
     return pony_non_dict_words_final
