@@ -81,7 +81,7 @@ def calculate_verbosity(df, names):
         prev_speaker = speaker
         prev_title = title
     for data_name in names.values():
-        pony_dialog_events[data_name] = 0 if num_dialog_events == 0 else float(pony_dialog_events[data_name])/num_dialog_events
+        pony_dialog_events[data_name] = 0 if num_dialog_events == 0 else round(pony_dialog_events[data_name]/num_dialog_events, 2)
     return pony_dialog_events
 
 """
@@ -174,7 +174,7 @@ def calculate_mentions(df, names):
     #computing the fraction instead of the count of mentions that we currently have
     for pony, other_ponies in pony_mention_events.items():
         for other_pony in other_ponies.keys():
-            pony_mention_events[pony][other_pony] = 0 if num_mentions_by_pony[pony] == 0 else float(pony_mention_events[pony][other_pony])/num_mentions_by_pony[pony]
+            pony_mention_events[pony][other_pony] = 0 if num_mentions_by_pony[pony] == 0 else round(pony_mention_events[pony][other_pony]/num_mentions_by_pony[pony], 2)
     return pony_mention_events
 
 """
@@ -291,7 +291,7 @@ def calculate_follow_on_comments(df, names):
     #calculating the fraction of follow on events
     for pony, other_ponies in pony_follow_on_events.items():
         for other_pony in other_ponies.keys():
-            pony_follow_on_events[pony][other_pony] = 0 if num_follow_on_by_pony[pony] == 0 else float(pony_follow_on_events[pony][other_pony])/num_follow_on_by_pony[pony]
+            pony_follow_on_events[pony][other_pony] = 0 if num_follow_on_by_pony[pony] == 0 else round(pony_follow_on_events[pony][other_pony]/num_follow_on_by_pony[pony], 2)
     
     return pony_follow_on_events
 

@@ -40,7 +40,8 @@ class MetricsTestCase(unittest.TestCase):
             sum = 0
             for fraction in other_ponies.values():
                 sum += fraction
-            self.assertTrue(0.99 <= sum <= 1.01)
+            #we have to check betwen 0.75 and 1.25 because theres an error of +-.25
+            self.assertTrue(0.975 <= sum <= 1.025)
 
     """
     this test is meant to check that the follow on function is working properly by testing whether the values of the dictionary sum to 1
@@ -51,7 +52,9 @@ class MetricsTestCase(unittest.TestCase):
             sum = 0
             for fraction in other_ponies.values():
                 sum += fraction
-            self.assertTrue(0.99 <= sum <= 1.01)
+
+            #we have to check betwen 0.75 and 1.25 because theres an error of +-.25
+            self.assertTrue(0.975 <= sum <= 1.025)
 
 
     """
@@ -61,11 +64,11 @@ class MetricsTestCase(unittest.TestCase):
         returned_dict = compute_metrics.calculate_verbosity(df_100, names)
         #there are 86 unique instances of dialog in the first 100 rows, 40 belong to twilight, 7 to aj, 1 to rarity, 8 to rainbow
         correct_output = {
-                    "twilight": 40/86,
-                    "applejack": 7/86,
-                    "rarity": 1/86,
+                    "twilight": round(40/86, 2),
+                    "applejack": round(7/86, 2),
+                    "rarity": round(1/86, 2),
                     "pinkie": 0,
-                    "rainbow": 8/86,
+                    "rainbow": round(8/86, 2),
                     "fluttershy": 0
                 }
         self.assertDictEqual(returned_dict, correct_output)
@@ -132,20 +135,20 @@ class MetricsTestCase(unittest.TestCase):
         returned_dict = compute_metrics.calculate_follow_on_comments(df_100, names)
         correct_output = {
                     "twilight": {
-                            "applejack": 6/40,
+                            "applejack": round(6/40,2),
                             "rarity": 0,
                             "pinkie": 0,
-                            "rainbow": 8/40,
+                            "rainbow": round(8/40,2),
                             "fluttershy": 0,
-                            "other": 26/40
+                            "other": round(26/40,2)
                         },
                      "applejack": {
-                            "twilight": 5/7,
+                            "twilight": round(5/7,2),
                             "rarity": 0,
                             "pinkie": 0,
                             "rainbow": 0,
                             "fluttershy": 0,
-                            "other": 2/7
+                            "other": round(2/7,2)
                         },
                      "rarity": {
                             "applejack": 0,
@@ -246,52 +249,52 @@ class MetricsTestCase(unittest.TestCase):
         returned_dict = compute_metrics.calculate_follow_on_comments(df_200, names)
         correct_output = {
                     "twilight": {
-                            "applejack": 7/67,
-                            "rarity": 7/67,
-                            "pinkie": 4/67,
-                            "rainbow": 8/67,
-                            "fluttershy": 5/67,
-                            "other": 36/67
+                            "applejack": round(7/67,2),
+                            "rarity": round(7/67,2),
+                            "pinkie": round(4/67,2),
+                            "rainbow": round(8/67,2),
+                            "fluttershy": round(5/67,2),
+                            "other": round(36/67,2)
                         },
                      "applejack": {
-                            "twilight": 5/11,
+                            "twilight": round(5/11,2),
                             "rarity": 0,
-                            "pinkie": 1/11,
-                            "rainbow": 2/11,
+                            "pinkie": round(1/11,2),
+                            "rainbow": round(2/11,2),
                             "fluttershy": 0,
-                            "other": 3/11
+                            "other": round(3/11,2)
                         },
                      "rarity": {
                             "applejack": 0,
-                            "twilight": 5/8,
-                            "pinkie": 1/8,
+                            "twilight": round(5/8,2),
+                            "pinkie": round(1/8,2),
                             "rainbow": 0,
                             "fluttershy": 0,
-                            "other": 2/8
+                            "other": round(2/8,2)
                         },
                      "pinkie": {
-                            "applejack": 1/9,
+                            "applejack": round(1/9,2),
                             "rarity": 0,
-                            "twilight": 3/9,
+                            "twilight": round(3/9,2),
                             "rainbow": 0,
                             "fluttershy": 0,
-                            "other": 5/9
+                            "other": round(5/9, 2)
                         },
                      "rainbow": {
-                            "applejack": 1/11,
+                            "applejack": round(1/11,2),
                             "rarity": 0,
                             "pinkie": 0,
-                            "twilight": 9/11,
+                            "twilight": round(9/11,2),
                             "fluttershy": 0,
-                            "other": 1/11
+                            "other": round(1/11,2)
                         },
                      "fluttershy": {
                             "applejack": 0,
                             "rarity": 0,
                             "pinkie": 0,
                             "rainbow": 0,
-                            "twilight": 5/11,
-                            "other": 6/11
+                            "twilight": round(5/11,2),
+                            "other": round(6/11,2)
                         }
                 }
         self.assertDictEqual(returned_dict, correct_output)
@@ -396,10 +399,10 @@ class MetricsTestCase(unittest.TestCase):
     def test_episode_change_verbosity(self):
         returned_dict = compute_metrics.calculate_verbosity(df_skip_2, names)
         correct_output = {
-                    "twilight": 4/6,
+                    "twilight": round(4/6,2),
                     "applejack": 0,
                     "rarity": 0,
-                    "pinkie": 1/6,
+                    "pinkie": round(1/6,2),
                     "rainbow": 0,
                     "fluttershy": 0,
                 }
