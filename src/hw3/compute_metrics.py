@@ -64,20 +64,20 @@ def calculate_verbosity(df, names):
     for index, row in df.iterrows():
         speaker = row["pony"]
         title = row["title"]
-        other_speaking = True
+        #other_speaking = True
         for dialog_name, data_name in names.items():
             #if the current speaker is equal to the pony (and only the pony) and the prev_speaker was not the pony or the previous line was from a diff episode
             #we increment the dialog event count for that pony
             if(dialog_name == speaker):
                 if(prev_speaker != speaker or prev_title != title):
                     #we set other_speaking to False because it means "others" were not speaking
-                    other_speaking = False
+                    #other_speaking = False
                     pony_dialog_events[data_name] += 1
                     num_dialog_events += 1
                     break
         #if other_speaking is True then a pony wasn't speaking on its own and if prev_speaker != speaker then this is new dialog for the other character
-        if(other_speaking == True and prev_speaker != speaker):
-            num_dialog_events += 1
+        #if(other_speaking == True and prev_speaker != speaker):
+        #    num_dialog_events += 1
         prev_speaker = speaker
         prev_title = title
     for data_name in names.values():
