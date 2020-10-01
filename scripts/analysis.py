@@ -11,7 +11,6 @@ import pandas
 import argparse
 import os.path as osp
 import sys
-print(sys.path)
 from compute_metrics import begin_computations
 
 script_dir = osp.normpath(osp.dirname(__file__))
