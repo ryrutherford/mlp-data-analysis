@@ -9,3 +9,7 @@ This file was used to detect non dictionary words used by the ponies
 ## My Little Pony Dialog
 
 Download the My Little Pony Dialog (clean_dialog.csv) used [here](https://www.kaggle.com/liury123/my-little-pony-transcript) and place it in the main project directory
+
+## words.json
+
+This is the output of the compile_word_counts.py script used in the tfidf calculations
