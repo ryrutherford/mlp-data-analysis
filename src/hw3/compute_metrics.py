@@ -4,7 +4,7 @@ This module contains the code to compute metrics for:
     - mentions
     - follow on comments
     - non dictionary words spoken
-for each pony:
+for each pony:F
     - Twilight Sparkle (twilight),
     - Applejack (applejack),
     - Rarity (rarity),
@@ -319,7 +319,7 @@ def find_non_dict_words(df, names):
     #converting the file to a set (to facilitate looking up words)
     words_set = set(words_file["word"])
     
-    #iterating over all rows in the datafram which holds the script data
+    #iterating over all rows in the dataframe which holds the script data
     for index, row in df.iterrows():
         speaker = row["pony"]
         dialog = row["dialog"]
@@ -338,10 +338,10 @@ def find_non_dict_words(df, names):
                 #at the end we will find the top 5 words
                 for word in words_in_dialog:
                     if(word.lower() not in words_set):
-                        if(word in pony_non_dict_words[pony_shorthand]):
-                            pony_non_dict_words[pony_shorthand][word] += 1
+                        if(word.lower() in pony_non_dict_words[pony_shorthand]):
+                            pony_non_dict_words[pony_shorthand][word.lower()] += 1
                         else:
-                            pony_non_dict_words[pony_shorthand][word] = 1
+                            pony_non_dict_words[pony_shorthand][word.lower()] = 1
     #print(pony_non_dict_words)
     #we need to find the list of top 5 used words
     pony_non_dict_words_final = {
