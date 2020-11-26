@@ -21,7 +21,10 @@ def main():
     parser.add_argument("-o", help="the name of the file to write the json output to",)
     args = parser.parse_args()
 
-    csv_path = osp.join(script_dir, "..", args.dialog_file)
+    #if you don't want to provide the full path uncomment this line
+    #csv_path = osp.join(script_dir, "..", args.dialog_file)
+
+    csv_path = args.dialog_file
     output_location = args.o
 
     df = pandas.read_csv(csv_path)

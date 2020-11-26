@@ -14,7 +14,7 @@ names = {
             "Rainbow Dash": "rainbow",
             "Fluttershy": "fluttershy",
         }
-src_file = osp.join(osp.dirname(osp.dirname(osp.dirname(__file__))), "clean_dialog.csv")
+src_file = osp.join((osp.dirname(__file__)), "clean_dialog_3045.csv")
 #full file
 df = pandas.read_csv(src_file)
 #first row
@@ -318,11 +318,11 @@ class MetricsTestCase(unittest.TestCase):
     def test_non_dictionary_words_first_100_rows(self):
         returned_dict = compute_metrics.find_non_dict_words(df_100, names)
         correct_output = {
-                    "twilight": ["Equestria", "ve", "Hmm", "Spi", "Nng"],
-                    "applejack": ["makin", "Yeehaw", "everypony", "attem"],
+                    "twilight": ["equestria", "ve", "hmm", "spi", "nng"],
+                    "applejack": ["makin", "yeehaw", "everypony", "attem"],
                     "rarity": [],
                     "pinkie": [],
-                    "rainbow": ["Lemme", "Wonderbolts", "Ponyville"],
+                    "rainbow": ["lemme", "wonderbolts", "ponyville"],
                     "fluttershy": [],
                 }
         self.assertDictEqual(returned_dict, correct_output)
